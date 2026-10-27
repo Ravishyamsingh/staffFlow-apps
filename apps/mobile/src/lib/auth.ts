@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Sentry } from "../monitoring/sentry";
 
 export type CognitoSession = {
   accessToken: string;
@@ -27,9 +28,19 @@ function clientId() {
 }
 
 async function authApi<T>(path: string, body: Record<string, unknown>) {
-  const response = await fetch(`${apiRoot()}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  let response: Response;
+  try {
+    response = await fetch(`${apiRoot()}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch (error) {
+    Sentry.captureException(error);
+    throw error;
+  }
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(String(payload.error ?? "Authentication request failed"));
+  if (!response.ok) {
+    const error = new Error(String(payload.error ?? "Authentication request failed"));
+    Sentry.captureException(error);
+    throw error;
+  }
   return payload as T;
 }
 

@@ -1,4 +1,5 @@
 import { clearSession, getValidSession, readSession, saveSession, type CognitoSession } from "./auth";
+import { Sentry } from "../monitoring/sentry";
 
 type ApiRequestInit = Omit<RequestInit, "body"> & { body?: unknown };
 
@@ -33,11 +34,16 @@ export async function apiRequest<T>(path: string, options: ApiRequestInit = {}) 
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 401) throw error;
     const original = await readSession();
-    if (!original?.refreshToken) { await clearSession(); throw error; }
+    if (!original?.refreshToken) { Sentry.captureException(error); await clearSession(); throw error; }
     const refreshed = await refreshSessionFromCognito(original);
-    if (!refreshed) { await clearSession(); throw error; }
+    if (!refreshed) { Sentry.captureException(error); await clearSession(); throw error; }
     session = refreshed;
-    return requestWithToken<T>(path, session, requestOptions);
+    try {
+      return await requestWithToken<T>(path, session, requestOptions);
+    } catch (retryError) {
+      Sentry.captureException(retryError);
+      throw retryError;
+    }
   }
 }
 

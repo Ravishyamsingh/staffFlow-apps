@@ -42,8 +42,8 @@ if ([string]::IsNullOrWhiteSpace($WebsocketApiEndpoint)) {
   $WebsocketApiEndpoint = "https://$WebsocketApiId.execute-api.$Region.amazonaws.com/$Stage"
 }
 
-$env:AWS_REGION = $Region
-$env:AWS_ACCOUNT_ID = $AccountId
+$env:MY_AWS_REGION = $Region
+$env:MY_AWS_ACCOUNT_ID = $AccountId
 $env:DYNAMODB_TABLE_NAME = $DynamoTableName
 $env:S3_BUCKET_NAME = $S3BucketName
 $env:COGNITO_USER_POOL_ID = $CognitoUserPoolId

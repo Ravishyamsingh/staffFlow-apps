@@ -49,8 +49,8 @@ jobs:
       - name: Package Serverless service
         working-directory: backend
         env:
-          AWS_ACCOUNT_ID: "123456789012"
-          AWS_REGION: ap-south-1
+          MY_AWS_ACCOUNT_ID: "123456789012"
+          MY_AWS_REGION: ap-south-1
           DYNAMODB_TABLE_NAME: StaffFlow
           S3_BUCKET_NAME: staffflow-private-ci
           COGNITO_USER_POOL_ID: ap-south-1_ci_pool

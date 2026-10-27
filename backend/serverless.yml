@@ -7,7 +7,7 @@ plugins:
 provider:
   name: aws
   runtime: nodejs20.x
-  region: ${env:AWS_REGION, 'ap-south-1'}
+  region: ${env:MY_AWS_REGION, 'ap-south-1'}
   stage: ${opt:stage, 'dev'}
   httpApi:
     cors:
@@ -40,6 +40,7 @@ provider:
   websocketsApiRouteSelectionExpression: $request.body.action
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+    MY_AWS_REGION: ${env:MY_AWS_REGION, 'ap-south-1'}
     DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME, 'StaffFlow'}
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
     COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID}
@@ -65,9 +66,9 @@ provider:
             - dynamodb:Scan
             - dynamodb:TransactWriteItems
           Resource:
-            - arn:aws:dynamodb:${aws:region}:${env:AWS_ACCOUNT_ID}:table/${self:provider.environment.DYNAMODB_TABLE_NAME}
-            - arn:aws:dynamodb:${aws:region}:${env:AWS_ACCOUNT_ID}:table/${self:provider.environment.DYNAMODB_TABLE_NAME}/index/*
-            - arn:aws:dynamodb:${aws:region}:${env:AWS_ACCOUNT_ID}:table/${self:provider.environment.WS_CONNECTIONS_TABLE_NAME}
+            - arn:aws:dynamodb:${aws:region}:${env:MY_AWS_ACCOUNT_ID}:table/${self:provider.environment.DYNAMODB_TABLE_NAME}
+            - arn:aws:dynamodb:${aws:region}:${env:MY_AWS_ACCOUNT_ID}:table/${self:provider.environment.DYNAMODB_TABLE_NAME}/index/*
+            - arn:aws:dynamodb:${aws:region}:${env:MY_AWS_ACCOUNT_ID}:table/${self:provider.environment.WS_CONNECTIONS_TABLE_NAME}
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -80,7 +81,7 @@ provider:
         - Effect: Allow
           Action:
             - execute-api:ManageConnections
-          Resource: arn:aws:execute-api:${aws:region}:${env:AWS_ACCOUNT_ID}:*/@connections/*
+          Resource: arn:aws:execute-api:${aws:region}:${env:MY_AWS_ACCOUNT_ID}:*/@connections/*
 
 custom:
   esbuild:

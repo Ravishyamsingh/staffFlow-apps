@@ -41,15 +41,16 @@ GitHub Actions configuration is included under [`.github/workflows`](./.github/w
 - `deploy-backend.yml` deploys the AWS backend from `main` using GitHub OIDC and a protected `production` environment.
 - `mobile-eas.yml` builds production Android/iOS binaries on mobile changes. Store submission is opt-in through the `MOBILE_AUTO_SUBMIT` repository variable or the manual workflow input.
 
-Connect the repository and `main` branch to AWS Amplify Hosting, select **My app is a monorepo**, and set the app root to `apps/admin`. Amplify reads [`amplify.yml`](./amplify.yml) and deploys `apps/admin`. Add the production web variables in Amplify, especially `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_AWS_REGION`, and `NEXT_PUBLIC_COGNITO_CLIENT_ID`.
+Connect the repository and `main` branch to AWS Amplify Hosting, select **My app is a monorepo**, and set the app root to `apps/admin`. Amplify reads [`amplify.yml`](./amplify.yml) and deploys `apps/admin`. Add only these browser-safe variables to Amplify: `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_AWS_REGION`, `NEXT_PUBLIC_COGNITO_USER_POOL_ID`, and `NEXT_PUBLIC_COGNITO_CLIENT_ID`. Do not add backend deployment variables or AWS access keys to Amplify; Amplify reserves names beginning with `AWS`.
 
 In GitHub, create a `production` environment with these secrets:
 
-- `AWS_DEPLOY_ROLE_ARN`: an AWS IAM role trusted by GitHub's OIDC provider.
+- `MY_AWS_DEPLOY_ROLE_ARN`: an AWS IAM role trusted by GitHub's OIDC provider.
 - `GEMINI_API_KEY`: optional backend parser secret.
 - `EXPO_TOKEN`: Expo/EAS programmatic access token.
+- `SENTRY_AUTH_TOKEN`: optional Sentry organization token used to upload mobile source maps.
 
-Add these production variables: `AWS_REGION`, `DYNAMODB_TABLE_NAME`, `S3_BUCKET_NAME`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_MOBILE_CLIENT_ID`, `WEBSOCKET_API_ID`, `WEBSOCKET_API_ENDPOINT`, `ADMIN_ORIGIN`, `EXPO_ORIGIN`, `CORS_ORIGINS`, `GEMINI_MODEL`, `EXPO_PROJECT_ID`, and `EXPO_PUBLIC_API_BASE_URL`. Set `MOBILE_AUTO_SUBMIT=true` only after EAS store credentials and release policy are ready.
+Add these GitHub `production` variables for backend/mobile deployment: `MY_AWS_REGION`, `DYNAMODB_TABLE_NAME`, `S3_BUCKET_NAME`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_MOBILE_CLIENT_ID`, `WEBSOCKET_API_ID`, `WEBSOCKET_API_ENDPOINT`, `ADMIN_ORIGIN`, `EXPO_ORIGIN`, `CORS_ORIGINS`, `GEMINI_MODEL`, `EXPO_PROJECT_ID`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, and `SENTRY_PROJECT`. Set `MOBILE_AUTO_SUBMIT=true` only after EAS store credentials and release policy are ready.
 
 The AWS role should use a narrowly scoped trust policy for this repository's `main` branch/production environment and should not use long-lived AWS access keys in GitHub. Run `eas init` once in `apps/mobile`, then save the generated project ID as `EXPO_PROJECT_ID`.
 

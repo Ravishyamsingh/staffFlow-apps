@@ -57,10 +57,11 @@ describe("backend request parsing and matching", () => {
   });
 
   it("treats Serverless empty optional environment values as unset", () => {
-    const parsed = getConfig({ AWS_REGION: "", DYNAMODB_TABLE_NAME: "", S3_BUCKET_NAME: "", COGNITO_USER_POOL_ID: "", COGNITO_CLIENT_ID: "", COGNITO_MOBILE_CLIENT_ID: "", COGNITO_ISSUER_URL: "", GEMINI_API_KEY: "", GEMINI_MODEL: "", CORS_ORIGINS: "", WEBSOCKET_API_ENDPOINT: "", WS_CONNECTIONS_TABLE_NAME: "" });
+    const parsed = getConfig({ MY_AWS_REGION: "", AWS_REGION: "", DYNAMODB_TABLE_NAME: "", S3_BUCKET_NAME: "", COGNITO_USER_POOL_ID: "", COGNITO_CLIENT_ID: "", COGNITO_MOBILE_CLIENT_ID: "", COGNITO_ISSUER_URL: "", GEMINI_API_KEY: "", GEMINI_MODEL: "", CORS_ORIGINS: "", WEBSOCKET_API_ENDPOINT: "", WS_CONNECTIONS_TABLE_NAME: "" });
     expect(parsed.region).toBe("ap-south-1");
     expect(parsed.bucketName).toBeUndefined();
     expect(parsed.cognitoIssuerUrl).toBeUndefined();
     expect(parsed.geminiModel).toBe("gemini-2.0-flash");
+    expect(getConfig({ MY_AWS_REGION: "eu-west-1", DYNAMODB_TABLE_NAME: "StaffFlow" }).region).toBe("eu-west-1");
   });
 });

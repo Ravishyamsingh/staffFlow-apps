@@ -5,7 +5,9 @@ const optionalString = (schema = z.string().min(1)) => z.preprocess(emptyAsUndef
 const optionalUrl = z.preprocess(emptyAsUndefined, z.string().url().optional());
 
 const EnvironmentSchema = z.object({
-  AWS_REGION: z.preprocess(emptyAsUndefined, z.string().min(1).default("ap-south-1")),
+  MY_AWS_REGION: optionalString(z.string().min(1)),
+  AWS_REGION: optionalString(z.string().min(1)),
+  MY_AWS_ACCOUNT_ID: optionalString(z.string().min(1)),
   DYNAMODB_TABLE_NAME: z.preprocess(emptyAsUndefined, z.string().min(1).default("StaffFlow")),
   S3_BUCKET_NAME: optionalString(z.string().min(3)),
   COGNITO_USER_POOL_ID: optionalString(),
@@ -37,7 +39,7 @@ export type BackendConfig = {
 export function getConfig(environment: NodeJS.ProcessEnv = process.env): BackendConfig {
   const parsed = EnvironmentSchema.parse(environment);
   return {
-    region: parsed.AWS_REGION,
+    region: parsed.MY_AWS_REGION ?? parsed.AWS_REGION ?? "ap-south-1",
     tableName: parsed.DYNAMODB_TABLE_NAME,
     bucketName: parsed.S3_BUCKET_NAME,
     cognitoUserPoolId: parsed.COGNITO_USER_POOL_ID,

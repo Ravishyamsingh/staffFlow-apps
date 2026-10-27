@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
-      AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      MY_AWS_REGION: ${{ vars.MY_AWS_REGION || 'ap-south-1' }}
       STAGE: prod
       DYNAMODB_TABLE_NAME: ${{ vars.DYNAMODB_TABLE_NAME }}
       S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
@@ -54,8 +54,8 @@ jobs:
       - name: Configure AWS credentials with GitHub OIDC
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.MY_AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.MY_AWS_REGION }}
 
       - name: Deploy backend
         run: bash backend/scripts/deploy-aws.sh

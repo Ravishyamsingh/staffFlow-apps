@@ -100,8 +100,8 @@ WebSocket API ID for the deployment command below.
 Do not put AWS access keys in Lambda environment variables. Serverless uses the local AWS profile/SSO session to deploy, while Lambda receives AWS permissions through its execution role. Keep `GEMINI_API_KEY` out of source control and provide it only through the deployment shell or CI secret store.
 
 ```powershell
-$env:AWS_REGION = "ap-south-1"
-$env:AWS_ACCOUNT_ID = "123456789012"
+$env:MY_AWS_REGION = "ap-south-1"
+$env:MY_AWS_ACCOUNT_ID = "123456789012"
 $env:DYNAMODB_TABLE_NAME = "StaffFlow"
 $env:S3_BUCKET_NAME = "your-private-bucket"
 $env:COGNITO_USER_POOL_ID = "ap-south-1_xxxxxxxx"
@@ -120,7 +120,7 @@ npm run backend:build
 npm run backend:deploy -- -Stage prod -Region ap-south-1 -AccountId 123456789012 -DynamoTableName StaffFlow -S3BucketName staffflow-private-prod -CognitoUserPoolId ap-south-1_xxxxxxxx -CognitoClientId your-admin-client-id -CognitoMobileClientId your-mobile-client-id -WebsocketApiId your-existing-websocket-api-id -AdminOrigin https://admin.example.com -ExpoOrigin http://localhost:8081
 ```
 
-The script is [`scripts/deploy-aws.ps1`](./scripts/deploy-aws.ps1). It sets the Serverless environment for the current process, runs typecheck/tests/build/package, deploys the stack, and prints the API endpoints. Pass `-SkipChecks` only for an emergency code-only redeploy.
+The script is [`scripts/deploy-aws.ps1`](./scripts/deploy-aws.ps1). It sets the project-owned `MY_AWS_*` deployment environment for the current process, runs typecheck/tests/build/package, deploys the stack, and prints the API endpoints. Pass `-SkipChecks` only for an emergency code-only redeploy.
 
 After deployment, configure the three Cognito custom-auth triggers with the deployed Lambda ARNs and grant Cognito permission to invoke them. The mobile client must have `ALLOW_CUSTOM_AUTH`; the admin client should use the standard password flow. Cognito custom-auth and app-client flow settings are described in the AWS documentation linked from the project deployment notes.
 
@@ -143,7 +143,7 @@ The repository's `deploy-backend.yml` workflow deploys this service after a push
 to `main` that changes the backend, package manifests, or the workflow itself.
 It runs [`scripts/deploy-aws.sh`](./scripts/deploy-aws.sh) on Ubuntu and expects
 the AWS resource names and Cognito IDs as GitHub `production` environment
-variables. Store only `AWS_DEPLOY_ROLE_ARN` and `GEMINI_API_KEY` as secrets.
+variables. Store only `MY_AWS_DEPLOY_ROLE_ARN` and `GEMINI_API_KEY` as secrets.
 
 Configure GitHub's OIDC provider in IAM and restrict the assumed role trust
 policy to this repository and its `production` environment. The workflow uses

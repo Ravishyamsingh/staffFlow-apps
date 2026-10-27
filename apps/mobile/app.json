@@ -6,12 +6,24 @@
     "orientation": "portrait",
     "scheme": "staffflow",
     "userInterfaceStyle": "light",
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "android": {
       "package": "com.staffflow.owner"
     },
     "ios": {
       "bundleIdentifier": "com.staffflow.owner"
-    }
+    },
+    "extra": {
+      "sentryDsn": {},
+      "eas": {
+        "projectId": "1c8199c1-4bad-4b33-b862-e0323c74374e"
+      },
+      "router": {
+        "origin": false
+      }
+    },
+    "owner": "ravishyam121"
   }
 }

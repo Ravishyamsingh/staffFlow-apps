@@ -4,7 +4,7 @@ const optional = (key: string) => process.env[key];
 
 export function getServerEnv() {
   return {
-    region: optional("AWS_REGION") ?? "ap-south-1",
+    region: optional("MY_AWS_REGION") ?? optional("AWS_REGION") ?? "ap-south-1",
     apiGatewayUrl: optional("API_GATEWAY_URL"),
     websocketUrl: optional("API_GATEWAY_WS_URL"),
     cognitoUserPoolId: optional("COGNITO_USER_POOL_ID"),

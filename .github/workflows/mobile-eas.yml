@@ -34,8 +34,8 @@ jobs:
       EXPO_PUBLIC_COGNITO_USER_POOL_ID: ${{ vars.COGNITO_USER_POOL_ID }}
       EXPO_PUBLIC_COGNITO_CLIENT_ID: ${{ vars.COGNITO_MOBILE_CLIENT_ID }}
       EXPO_PUBLIC_SENTRY_DSN: ${{ vars.EXPO_PUBLIC_SENTRY_DSN }}
-      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG || secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || secrets.SENTRY_PROJECT }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       MOBILE_AUTO_SUBMIT: ${{ vars.MOBILE_AUTO_SUBMIT || 'false' }}
       SUBMIT_ON_DISPATCH: ${{ inputs.submit || false }}

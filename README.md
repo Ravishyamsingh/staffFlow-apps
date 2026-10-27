@@ -52,6 +52,8 @@ In GitHub, create a `production` environment with these secrets:
 
 Add these GitHub `production` variables for backend/mobile deployment: `MY_AWS_REGION`, `DYNAMODB_TABLE_NAME`, `S3_BUCKET_NAME`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_MOBILE_CLIENT_ID`, `WEBSOCKET_API_ID`, `WEBSOCKET_API_ENDPOINT`, `ADMIN_ORIGIN`, `EXPO_ORIGIN`, `CORS_ORIGINS`, `GEMINI_MODEL`, `EXPO_PROJECT_ID`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, and `SENTRY_PROJECT`. Set `MOBILE_AUTO_SUBMIT=true` only after EAS store credentials and release policy are ready.
 
+EAS Build runs on Expo's build workers, so also add the mobile build variables to the Expo project's **Environment variables** page for the `production` environment. In particular, `SENTRY_ORG` and `SENTRY_PROJECT` can be plain text, while `SENTRY_AUTH_TOKEN` must be an EAS secret. GitHub Actions variables alone are not available inside the remote Gradle build.
+
 The AWS role should use a narrowly scoped trust policy for this repository's `main` branch/production environment and should not use long-lived AWS access keys in GitHub. From `apps/mobile`, use the Expo CLI package explicitly: `npx eas-cli@latest login`, then `npx eas-cli@latest init`. Do not use `npx eas`; that resolves a different npm package. Save the generated project ID as `EXPO_PROJECT_ID`.
 
 ## Stitch handoff inventory

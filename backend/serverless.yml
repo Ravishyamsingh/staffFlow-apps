@@ -1,0 +1,141 @@
+service: staffflow-backend
+frameworkVersion: ">=3.39.0 <4.0.0"
+
+plugins:
+  - serverless-esbuild
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${env:AWS_REGION, 'ap-south-1'}
+  stage: ${opt:stage, 'dev'}
+  httpApi:
+    cors:
+      allowedOrigins:
+        - ${env:ADMIN_ORIGIN, 'http://localhost:3000'}
+        - ${env:EXPO_ORIGIN, 'http://localhost:8081'}
+      allowedHeaders:
+        - Authorization
+        - Content-Type
+        - X-Request-Id
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      allowCredentials: true
+    authorizers:
+      cognitoJwt:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: ${env:COGNITO_ISSUER_URL}
+        audience:
+          - ${env:COGNITO_CLIENT_ID}
+          - ${env:COGNITO_MOBILE_CLIENT_ID}
+  apiGateway:
+    websocketApiId: ${env:WEBSOCKET_API_ID}
+  websocketsApiName: ${self:service}-${self:provider.stage}
+  websocketsApiRouteSelectionExpression: $request.body.action
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+    DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME, 'StaffFlow'}
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID}
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID}
+    COGNITO_MOBILE_CLIENT_ID: ${env:COGNITO_MOBILE_CLIENT_ID}
+    COGNITO_ISSUER_URL: ${env:COGNITO_ISSUER_URL}
+    GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
+    GEMINI_MODEL: ${env:GEMINI_MODEL, 'gemini-2.0-flash'}
+    CORS_ORIGINS: ${env:CORS_ORIGINS, 'http://localhost:3000,http://localhost:8081'}
+    WEBSOCKET_API_ENDPOINT: ${env:WEBSOCKET_API_ENDPOINT, ''}
+    WS_CONNECTIONS_TABLE_NAME: ${env:WS_CONNECTIONS_TABLE_NAME, 'StaffFlow'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchWriteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:TransactWriteItems
+          Resource:
+            - arn:aws:dynamodb:${aws:region}:${env:AWS_ACCOUNT_ID}:table/${self:provider.environment.DYNAMODB_TABLE_NAME}
+            - arn:aws:dynamodb:${aws:region}:${env:AWS_ACCOUNT_ID}:table/${self:provider.environment.DYNAMODB_TABLE_NAME}/index/*
+            - arn:aws:dynamodb:${aws:region}:${env:AWS_ACCOUNT_ID}:table/${self:provider.environment.WS_CONNECTIONS_TABLE_NAME}
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource: arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}/*
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - execute-api:ManageConnections
+          Resource: arn:aws:execute-api:${aws:region}:${env:AWS_ACCOUNT_ID}:*/@connections/*
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node20
+    platform: node
+
+functions:
+  auth:
+    handler: src/handlers/auth.handler
+    timeout: 15
+    memorySize: 256
+    events:
+      - httpApi:
+          path: /api/auth/{proxy+}
+          method: ANY
+  http:
+    handler: src/handlers/http.handler
+    timeout: 29
+    memorySize: 512
+    events:
+      - httpApi:
+          path: /health
+          method: GET
+      - httpApi:
+          path: /api/{proxy+}
+          method: ANY
+          authorizer:
+            name: cognitoJwt
+  websocketConnect:
+    handler: src/handlers/websocket.connect
+    events:
+      - websocket:
+          route: $connect
+          authorizer:
+            name: websocketAuthorizer
+            identitySource:
+              - route.request.header.Authorization
+              - route.request.querystring.Authorization
+  websocketDisconnect:
+    handler: src/handlers/websocket.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  websocketDefault:
+    handler: src/handlers/websocket.defaultHandler
+    events:
+      - websocket: $default
+  websocketAuthorizer:
+    handler: src/handlers/websocket.websocketAuthorizer
+  defineAuthChallenge:
+    handler: src/handlers/auth.defineAuthChallenge
+  createAuthChallenge:
+    handler: src/handlers/auth.createAuthChallenge
+  verifyAuthChallenge:
+    handler: src/handlers/auth.verifyAuthChallenge

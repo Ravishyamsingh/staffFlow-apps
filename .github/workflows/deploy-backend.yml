@@ -1,0 +1,61 @@
+name: Deploy StaffFlow backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      STAGE: prod
+      DYNAMODB_TABLE_NAME: ${{ vars.DYNAMODB_TABLE_NAME }}
+      S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+      COGNITO_USER_POOL_ID: ${{ vars.COGNITO_USER_POOL_ID }}
+      COGNITO_CLIENT_ID: ${{ vars.COGNITO_CLIENT_ID }}
+      COGNITO_MOBILE_CLIENT_ID: ${{ vars.COGNITO_MOBILE_CLIENT_ID }}
+      WEBSOCKET_API_ID: ${{ vars.WEBSOCKET_API_ID }}
+      WEBSOCKET_API_ENDPOINT: ${{ vars.WEBSOCKET_API_ENDPOINT }}
+      ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN }}
+      EXPO_ORIGIN: ${{ vars.EXPO_ORIGIN || 'http://localhost:8081' }}
+      CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.0-flash' }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials with GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy backend
+        run: bash backend/scripts/deploy-aws.sh

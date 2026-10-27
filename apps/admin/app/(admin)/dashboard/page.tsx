@@ -1,0 +1,41 @@
+"use client";
+
+import { ArrowUpRight, Bot, CalendarDays, CheckSquare2, ClipboardList, Info, Radio, UsersRound } from "lucide-react";
+import { useMemo, useState } from "react";
+import { RequestDetailDrawer } from "../../../src/components/request-detail-drawer";
+import { formatSlot, formatSummary, labelForStatus, type AdminRequest } from "../../../src/lib/admin-data";
+import { useApiQuery } from "../../../src/lib/api";
+
+const kpiIcons = { clipboard: ClipboardList, review: CheckSquare2, users: UsersRound, calendar: CalendarDays, bot: Bot };
+
+export default function DashboardPage() {
+  const requests = useApiQuery<{ requests: AdminRequest[] }>("/requests?limit=1000");
+  const stats = useApiQuery<{ total: number; byStatus: Record<string, number>; pendingReview: number }>("/dashboard/stats");
+  const partners = useApiQuery<{ partners: { id: string; name: string; availability: string[] }[] }>("/partners");
+  const heatmap = useApiQuery<{ heatmap: { day: string; total: number; available: number }[] }>("/dashboard/heatmap");
+  const [selected, setSelected] = useState<AdminRequest | null>(null);
+  const requestItems = requests.data?.requests ?? [];
+  const byStatus = stats.data?.byStatus ?? {};
+  const subcategories = useMemo(() => {
+    const counts = new Map<string, number>();
+    requestItems.flatMap((request) => request.bookings).forEach((booking) => counts.set(booking.subcategory ?? booking.role, (counts.get(booking.subcategory ?? booking.role) ?? 0) + booking.count));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  }, [requestItems]);
+  const uncertain = requestItems.reduce((total, request) => total + request.uncertainFields, 0);
+  const totalBookings = requestItems.reduce((total, request) => total + request.bookings.length, 0);
+  const kpis = [
+    { label: "Total Requests", value: String(stats.data?.total ?? requestItems.length), helper: "From the live API", trend: "Live", tone: "teal", icon: "clipboard" as const },
+    { label: "Pending Review", value: String(stats.data?.pendingReview ?? 0), helper: "Requests with uncertain fields", trend: "Review", tone: "amber", icon: "review" as const },
+    { label: "Active Requests", value: String((byStatus.new ?? 0) + (byStatus.parsed ?? 0) + (byStatus.reviewed ?? 0) + (byStatus.matched ?? 0) + (byStatus.confirmed ?? 0)), helper: "Not completed or cancelled", trend: "Live", tone: "teal", icon: "users" as const },
+    { label: "Available Partners", value: String(partners.data?.partners.filter((partner) => partner.availability.length > 0).length ?? 0), helper: "Profiles returned by API", trend: "Roster", tone: "green", icon: "calendar" as const },
+    { label: "Resolved Fields", value: totalBookings ? `${Math.max(0, Math.round((1 - uncertain / Math.max(1, totalBookings * 6)) * 100))}%` : "—", helper: "Based on parse confidence", trend: "Telemetry", tone: "teal", icon: "bot" as const },
+  ];
+
+  return <main className="page"><div className="page-header"><div><div className="page-kicker">Live API workspace · Cognito authenticated</div><div style={{ display: "flex", alignItems: "baseline", gap: 9 }}><h1 className="page-title">Shift Operations Desk</h1><span className="muted" style={{ fontSize: 11 }}>Updated {new Date().toLocaleTimeString()}</span></div></div><div className="header-actions"><span className="filter-control"><span style={{ color: "var(--primary)" }}>●</span> Backend connected</span></div></div>{requests.error ? <div className="error-banner">{requests.error.message}</div> : null}<div className="kpi-grid">{kpis.map((kpi) => { const Icon = kpiIcons[kpi.icon]; return <div className="card kpi" key={kpi.label}><div className="kpi-top"><div className="kpi-icon"><Icon size={18} /></div><span className={`kpi-badge ${kpi.tone === "amber" ? "amber" : ""}`}>{kpi.trend}</span></div><div className="kpi-label">{kpi.label}</div><div className="kpi-value">{kpi.value}</div><div className="kpi-helper">{kpi.helper}</div><div className="mini-bar"><span style={{ width: kpi.label === "Resolved Fields" ? kpi.value : "68%" }} /></div></div>; })}</div><div className="dashboard-grid"><section className="card"><div className="card-header"><div><h2 className="card-title">Recent Requests Feed</h2><p className="card-subtitle">Requests returned from DynamoDB through the authenticated API</p></div><span className="chip">{requestItems.length} loaded</span></div>{requests.loading ? <Loading /> : requestItems.length === 0 ? <Empty text="No requests have been created yet." /> : <table className="feed-table"><thead><tr><th>Request</th><th>Details</th><th>Slot</th><th>Status</th></tr></thead><tbody>{requestItems.slice(0, 10).map((request) => <tr key={request.id} onClick={() => setSelected(request)}><td><div className="req-id">{request.id}</div><div className="venue">{request.ownerEmail ?? request.ownerId}</div></td><td><div className="req-summary">{request.rawInput}</div><div className="req-sub">{formatSummary(request)}</div></td><td><div className="slot">{formatSlot(request)}</div></td><td><span className={`status ${request.status}`}>{labelForStatus(request.status)}</span></td></tr>)}</tbody></table>}<div style={{ display: "flex", justifyContent: "space-between", padding: "12px 14px", fontSize: 11 }}><span className="muted">Showing live records</span><a href="/requests/live" style={{ color: "var(--primary-dark)", fontWeight: 700 }}>View live requests <ArrowUpRight size={13} style={{ verticalAlign: "-2px" }} /></a></div></section><Heatmap data={heatmap.data?.heatmap ?? []} /></div><div className="bottom-grid"><Subcategories items={subcategories} /><Corrections uncertain={uncertain} /></div>{selected ? <RequestDetailDrawer request={selected} onClose={() => setSelected(null)} onChanged={requests.reload} /> : null}</main>;
+}
+
+function Heatmap({ data }: { data: { day: string; total: number; available: number }[] }) { return <section className="card"><div className="card-header"><div><h2 className="card-title">Partner Availability</h2><p className="card-subtitle">Live availability returned by the backend</p></div><span className="chip">{data.length} days</span></div><div className="card-body">{data.length ? <div className="heatmap-list">{data.map((item) => <div className="metric-row" key={item.day}><span><strong>{item.day}</strong><span className="muted"> · {item.total} rostered</span></span><strong style={{ color: "var(--primary-dark)" }}>{item.available} available</strong></div>)}</div> : <Empty text="No availability data returned." />}<div className="heat-note"><Radio size={15} color="var(--primary)" /><span>Availability is calculated from live partner profiles.</span></div></div></section>; }
+function Subcategories({ items }: { items: [string, number][] }) { const max = Math.max(1, ...items.map(([, value]) => value)); return <section className="card"><div className="card-header"><div><h2 className="card-title">Demand by Subcategory</h2><p className="card-subtitle">Counts from live request bookings</p></div></div><div className="card-body">{items.length ? <div className="bar-list">{items.map(([label, value]) => <div className="bar-row" key={label}><div className="bar-row-head"><span>{label}</span><span className="bar-value">{value}</span></div><div className="bar-track"><div className="bar-fill" style={{ width: `${(value / max) * 100}%` }} /></div></div>)}</div> : <Empty text="No booking demand data returned." />}</div></section>; }
+function Corrections({ uncertain }: { uncertain: number }) { return <section className="card"><div className="card-header"><div><h2 className="card-title">Parse Confidence</h2><p className="card-subtitle">Live uncertainty count from stored requests</p></div><span className="chip">API telemetry</span></div><div className="card-body"><div className="metric-list"><div className="metric-row"><span>Uncertain fields</span><strong>{uncertain}</strong></div><div className="metric-row"><span>Source</span><strong>Backend parser</strong></div></div><div className="heat-note"><Info size={15} color="var(--primary)" /><span>Review uncertain fields before confirming a request.</span></div></div></section>; }
+function Loading() { return <div className="card-body muted">Loading live records…</div>; }
+function Empty({ text }: { text: string }) { return <div className="card-body muted">{text}</div>; }

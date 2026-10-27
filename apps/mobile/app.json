@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "StaffFlow",
+    "slug": "staffflow-owner",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "staffflow",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
+    "android": {
+      "package": "com.staffflow.owner"
+    },
+    "ios": {
+      "bundleIdentifier": "com.staffflow.owner"
+    }
+  }
+}

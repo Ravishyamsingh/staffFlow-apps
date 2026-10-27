@@ -1,0 +1,65 @@
+name: StaffFlow CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate mobile
+        run: |
+          npm run mobile:typecheck
+          npm test
+          EXPO_NO_TELEMETRY=1 npm --workspace apps/mobile exec -- expo export --platform android
+
+      - name: Validate admin
+        run: |
+          npm run admin:typecheck
+          npm run admin:build
+
+      - name: Validate backend
+        run: |
+          npm run backend:typecheck
+          npm run backend:test
+          npm run backend:build
+
+      - name: Package Serverless service
+        working-directory: backend
+        env:
+          AWS_ACCOUNT_ID: "123456789012"
+          AWS_REGION: ap-south-1
+          DYNAMODB_TABLE_NAME: StaffFlow
+          S3_BUCKET_NAME: staffflow-private-ci
+          COGNITO_USER_POOL_ID: ap-south-1_ci_pool
+          COGNITO_CLIENT_ID: ci-admin-client
+          COGNITO_MOBILE_CLIENT_ID: ci-mobile-client
+          COGNITO_ISSUER_URL: https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_ci_pool
+          WEBSOCKET_API_ID: ci-websocket
+          WEBSOCKET_API_ENDPOINT: https://ci-websocket.execute-api.ap-south-1.amazonaws.com/ci
+          ADMIN_ORIGIN: https://admin.example.com
+          EXPO_ORIGIN: http://localhost:8081
+          CORS_ORIGINS: https://admin.example.com,http://localhost:8081
+        run: npm exec -- serverless package --stage ci --region ap-south-1

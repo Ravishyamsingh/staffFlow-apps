@@ -1,0 +1,24 @@
+version: 1
+
+env:
+  variables:
+    AMPLIFY_MONOREPO_APP_ROOT: apps/admin
+
+applications:
+  - appRoot: apps/admin
+    frontend:
+      buildPath: /
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run admin:build
+      artifacts:
+        baseDirectory: apps/admin/.next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*

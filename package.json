@@ -1,0 +1,19 @@
+{
+  "name": "staffflow",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/mobile", "apps/admin", "backend"],
+  "scripts": {
+    "mobile": "npm --workspace apps/mobile start",
+    "mobile:typecheck": "npm --workspace apps/mobile run typecheck",
+    "test": "npm --workspace apps/mobile test",
+    "admin": "npm --workspace apps/admin dev",
+    "admin:typecheck": "npm --workspace apps/admin run typecheck",
+    "admin:build": "npm --workspace apps/admin run build",
+    "backend:typecheck": "npm --workspace backend run typecheck",
+    "backend:test": "npm --workspace backend test",
+    "backend:build": "npm --workspace backend run build",
+    "backend:deploy": "powershell -ExecutionPolicy Bypass -File backend/scripts/deploy-aws.ps1",
+    "backend:deploy:ci": "bash backend/scripts/deploy-aws.sh"
+  }
+}

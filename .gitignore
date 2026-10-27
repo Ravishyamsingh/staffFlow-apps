@@ -1,0 +1,34 @@
+node_modules/
+.next/
+*.tsbuildinfo
+.expo/
+.expo-export/
+dist/
+.serverless/
+backend/dist/
+
+# Environment and secret files
+.env
+.env.*
+*.env
+*.env.*
+*secret*
+*secrets*
+credentials.*
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+service-account*.json
+google-credentials*.json
+**/secrets/
+**/credentials/
+
+# Generated Stitch UI
+stitch_staffflow_restaurant_staffing_app/
+
+# Documentation other than the main README
+*.md
+!README.md

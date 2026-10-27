@@ -5,6 +5,11 @@ module.exports = ({ config }) => ({
   ...config,
   plugins: [
     ...(config.plugins ?? appConfig.expo.plugins ?? []),
+    ["expo-build-properties", {
+      android: {
+        kotlinVersion: "1.9.25",
+      },
+    }],
     ["@sentry/react-native/expo", {
       url: "https://sentry.io/",
       ...(process.env.SENTRY_ORG ? { organization: process.env.SENTRY_ORG } : {}),
@@ -13,7 +18,10 @@ module.exports = ({ config }) => ({
   ],
   extra: {
     ...config.extra,
-    sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN ?? null,
+    sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN
+      || process.env.EXPO_SENTRY_DSN
+      || process.env.SENTRY_DSN
+      || null,
     eas: {
       ...config.extra?.eas,
       ...(process.env.EXPO_PROJECT_ID ? { projectId: process.env.EXPO_PROJECT_ID } : {}),

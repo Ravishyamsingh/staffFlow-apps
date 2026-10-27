@@ -48,7 +48,7 @@ In GitHub, create a `production` environment with these secrets:
 - `MY_AWS_DEPLOY_ROLE_ARN`: an AWS IAM role trusted by GitHub's OIDC provider.
 - `GEMINI_API_KEY`: optional backend parser secret.
 - `EXPO_TOKEN`: Expo/EAS programmatic access token.
-- `SENTRY_AUTH_TOKEN`: optional Sentry organization token used to upload mobile source maps.
+- `SENTRY_AUTH_TOKEN`: Sentry organization token required for mobile source-map upload during production builds.
 
 Add these GitHub `production` variables for backend/mobile deployment: `MY_AWS_REGION`, `DYNAMODB_TABLE_NAME`, `S3_BUCKET_NAME`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_MOBILE_CLIENT_ID`, `WEBSOCKET_API_ID`, `WEBSOCKET_API_ENDPOINT`, `ADMIN_ORIGIN`, `EXPO_ORIGIN`, `CORS_ORIGINS`, `GEMINI_MODEL`, `EXPO_PROJECT_ID`, `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, and `SENTRY_PROJECT`. Set `MOBILE_AUTO_SUBMIT=true` only after EAS store credentials and release policy are ready.
 

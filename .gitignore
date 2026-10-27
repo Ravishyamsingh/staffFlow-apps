@@ -4,6 +4,8 @@ node_modules/
 .expo/
 .expo-export/
 dist/
+apps/mobile/android/
+apps/mobile/ios/
 .serverless/
 backend/dist/
 

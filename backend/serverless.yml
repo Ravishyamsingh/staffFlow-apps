@@ -81,7 +81,7 @@ provider:
         - Effect: Allow
           Action:
             - cognito-idp:ListUsers
-          Resource: arn:aws:cognito-idp:${aws:region}:${env:MY_AWS_ACCOUNT_ID}:userpool/${env:COGNITO_USER_POOL_ID}
+          Resource: '*'
         - Effect: Allow
           Action:
             - execute-api:ManageConnections

@@ -77,6 +77,7 @@ jobs:
           fi
           echo "EXPO_PUBLIC_API_BASE_URL=${api_base_url%/}" >> "$GITHUB_ENV"
           echo "Mobile build API: ${api_base_url%/}" >> "$GITHUB_STEP_SUMMARY"
+          npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_API_BASE_URL --value "${api_base_url%/}" --visibility plaintext --scope project --force --non-interactive
 
       - name: Validate EAS configuration
         env:
@@ -104,5 +105,5 @@ jobs:
           if [ "${MOBILE_AUTO_SUBMIT:-false}" = "true" ] || [ "${SUBMIT_ON_DISPATCH:-false}" = "true" ]; then
             npx eas-cli@latest build --platform all --profile production --non-interactive --auto-submit --auto-submit-with-profile production
           else
-            npx eas-cli@latest build --platform all --profile production --non-interactive --no-wait
+            npx eas-cli@latest build --platform android --profile preview --non-interactive --no-wait
           fi

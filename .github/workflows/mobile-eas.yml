@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: mobile-production
@@ -29,6 +30,7 @@ jobs:
     environment: production
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      MY_AWS_REGION: ${{ vars.MY_AWS_REGION || vars.EXPO_PUBLIC_AWS_REGION || secrets.MY_AWS_REGION || secrets.EXPO_PUBLIC_AWS_REGION || 'ap-south-1' }}
       EXPO_PROJECT_ID: ${{ vars.EXPO_PROJECT_ID || secrets.EXPO_PROJECT_ID }}
       EXPO_PUBLIC_API_BASE_URL: ${{ vars.EXPO_PUBLIC_API_BASE_URL || secrets.EXPO_PUBLIC_API_BASE_URL }}
       EXPO_PUBLIC_AWS_REGION: ${{ vars.MY_AWS_REGION || vars.EXPO_PUBLIC_AWS_REGION || secrets.MY_AWS_REGION || secrets.EXPO_PUBLIC_AWS_REGION || 'ap-south-1' }}
@@ -56,6 +58,25 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.MY_AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.MY_AWS_REGION }}
+
+      - name: Resolve deployed HTTP API URL
+        env:
+          STAGE: prod
+        run: |
+          set -euo pipefail
+          api_base_url="$(aws cloudformation describe-stacks --stack-name "staffflow-backend-${STAGE}" --region "${MY_AWS_REGION}" --query "Stacks[0].Outputs[?OutputKey=='HttpApiUrl'].OutputValue" --output text)"
+          if [ -z "${api_base_url}" ] || [ "${api_base_url}" = "None" ]; then
+            echo "::error title=Missing deployed API URL::The backend CloudFormation stack has no HttpApiUrl output."
+            exit 1
+          fi
+          echo "EXPO_PUBLIC_API_BASE_URL=${api_base_url%/}" >> "$GITHUB_ENV"
+          echo "Mobile build API: ${api_base_url%/}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Validate EAS configuration
         env:

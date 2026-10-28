@@ -64,11 +64,18 @@ async function verifyOtp(input: z.infer<typeof VerifySchema>, event: Parameters<
 
 async function usernameForPhone(phoneNumber: string) {
   if (!config.cognitoUserPoolId) throw badRequest("COGNITO_USER_POOL_ID is not configured");
-  const result = await cognito.send(new ListUsersCommand({
-    UserPoolId: config.cognitoUserPoolId,
-    Filter: `phone_number = "${phoneNumber}"`,
-    Limit: 2,
-  }));
+  let result;
+  try {
+    result = await cognito.send(new ListUsersCommand({
+      UserPoolId: config.cognitoUserPoolId,
+      Filter: `phone_number = "${phoneNumber}"`,
+      Limit: 2,
+    }));
+  } catch (error) {
+    const name = error instanceof Error ? error.name : "UnknownCognitoError";
+    console.error("Cognito phone lookup failed", { name });
+    throw badRequest(`Cognito phone lookup failed (${name})`);
+  }
   const users = result.Users ?? [];
   if (users.length !== 1 || !users[0]?.Username) {
     throw badRequest("No Cognito user is registered with this phone number");

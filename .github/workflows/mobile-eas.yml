@@ -56,6 +56,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate EAS configuration
+        env:
+          EAS_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${EAS_TOKEN}" ]; then
+            echo "::error title=Missing Expo token::Add the EXPO_TOKEN secret to the production environment. Create it from the Expo account token page."
+            exit 1
+          fi
+          if [ -z "${EXPO_PROJECT_ID:-}" ]; then
+            echo "::error title=Missing Expo project ID::Add EXPO_PROJECT_ID to the production environment variables."
+            exit 1
+          fi
+
       - name: Configure EAS
         uses: expo/expo-github-action@v8
         with:
@@ -65,10 +79,7 @@ jobs:
       - name: Verify EAS project configuration
         working-directory: apps/mobile
         run: |
-          if [ -z "${EXPO_PROJECT_ID:-}" ]; then
-            echo "EXPO_PROJECT_ID is required. Run 'eas init' once locally and save the project ID as a GitHub production variable."
-            exit 1
-          fi
+          test "$(node -e "console.log(require('./app.json').expo.extra.eas.projectId)")" = "${EXPO_PROJECT_ID}"
 
       - name: Build mobile binaries
         working-directory: apps/mobile

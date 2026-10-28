@@ -53,6 +53,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate AWS deployment configuration
+        env:
+          DEPLOY_ROLE_ARN: ${{ secrets.MY_AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_ROLE_ARN}" ]; then
+            echo "::error title=Missing AWS deployment role::Add the MY_AWS_DEPLOY_ROLE_ARN secret to the production environment, and trust this repository's GitHub OIDC subject."
+            exit 1
+          fi
+          for name in DYNAMODB_TABLE_NAME S3_BUCKET_NAME COGNITO_USER_POOL_ID COGNITO_CLIENT_ID COGNITO_MOBILE_CLIENT_ID WEBSOCKET_API_ID ADMIN_ORIGIN; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=Missing backend variable::Add ${name} to the production environment variables."
+              exit 1
+            fi
+          done
+
       - name: Configure AWS credentials with GitHub OIDC
         uses: aws-actions/configure-aws-credentials@v6
         with:

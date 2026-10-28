@@ -1,10 +1,17 @@
-import { Stack } from "expo-router";
+import { Stack, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Sentry from "@sentry/react-native";
-import "../src/monitoring/sentry";
+import { useEffect } from "react";
+import { navigationIntegration } from "../src/monitoring/sentry";
 
 function RootLayout() {
+  const navigationRef = useNavigationContainerRef();
+
+  useEffect(() => {
+    navigationIntegration.registerNavigationContainer(navigationRef);
+  }, [navigationRef]);
+
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />

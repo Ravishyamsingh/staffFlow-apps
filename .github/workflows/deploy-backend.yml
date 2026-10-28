@@ -89,7 +89,7 @@ jobs:
           fi
           API_BASE_URL="${API_BASE_URL%/}"
           curl --fail --silent --show-error "${API_BASE_URL}/health" >/dev/null
-          status=$(curl --silent --output /tmp/staffflow-auth-route.json --write-out "%{http_code}" --request GET "${API_BASE_URL}/api/auth/otp/send")
+          status=$(curl --silent --output /tmp/staffflow-auth-route.json --write-out "%{http_code}" --request POST --header "content-type: application/json" --data '{}' "${API_BASE_URL}/api/auth/otp/send")
           if [ "${status}" = "404" ]; then
             cat /tmp/staffflow-auth-route.json
             echo "The deployed API is missing /api/auth/otp/send."

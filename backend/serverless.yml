@@ -80,10 +80,6 @@ provider:
           Resource: '*'
         - Effect: Allow
           Action:
-            - cognito-idp:ListUsers
-          Resource: '*'
-        - Effect: Allow
-          Action:
             - execute-api:ManageConnections
           Resource: arn:aws:execute-api:${aws:region}:${env:MY_AWS_ACCOUNT_ID}:*/@connections/*
 

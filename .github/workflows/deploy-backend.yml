@@ -37,6 +37,7 @@ jobs:
       EXPO_ORIGIN: ${{ vars.EXPO_ORIGIN || 'http://localhost:8081' }}
       CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
       API_BASE_URL: ${{ vars.EXPO_PUBLIC_API_BASE_URL || secrets.EXPO_PUBLIC_API_BASE_URL }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.0-flash' }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
@@ -83,16 +84,15 @@ jobs:
           API_BASE_URL: ${{ env.API_BASE_URL }}
         run: |
           set -euo pipefail
-          stack_api_base_url="$(aws cloudformation describe-stacks --stack-name "staffflow-backend-${STAGE}" --region "${MY_AWS_REGION}" --query "Stacks[0].Outputs[?OutputKey=='HttpApiUrl'].OutputValue" --output text 2>/dev/null || true)"
-          if [ -n "${stack_api_base_url}" ] && [ "${stack_api_base_url}" != "None" ]; then
-            API_BASE_URL="${stack_api_base_url}"
+          stack_api_base_url="$(aws cloudformation describe-stacks --stack-name "staffflow-backend-${STAGE}" --region "${MY_AWS_REGION}" --query "Stacks[0].Outputs[?OutputKey=='HttpApiUrl'].OutputValue" --output text)"
+          if [ -z "${stack_api_base_url}" ] || [ "${stack_api_base_url}" = "None" ]; then
+            echo "::error title=Missing deployed API URL::CloudFormation did not return HttpApiUrl for staffflow-backend-${STAGE}."
+            exit 1
           fi
+          API_BASE_URL="${stack_api_base_url}"
           echo "Deployed HTTP API: ${API_BASE_URL}" >> "$GITHUB_STEP_SUMMARY"
-          if [ -z "${API_BASE_URL}" ]; then
-            echo "API_BASE_URL is not configured; skipping public route smoke test."
-            exit 0
-          fi
           API_BASE_URL="${API_BASE_URL%/}"
+          (cd apps/mobile && npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_API_BASE_URL --value "${API_BASE_URL}" --visibility plaintext --scope project --force --non-interactive)
           curl --fail --silent --show-error "${API_BASE_URL}/health" >/dev/null
           status=$(curl --silent --output /tmp/staffflow-auth-route.json --write-out "%{http_code}" --request POST --header "content-type: application/json" --data '{}' "${API_BASE_URL}/api/auth/otp/send")
           if [ "${status}" = "404" ]; then

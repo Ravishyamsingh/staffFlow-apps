@@ -80,6 +80,8 @@ function normalizeAuthError(error: unknown) {
   const name = error instanceof Error ? error.name : "";
   if (name === "UserNotFoundException") return badRequest("No Cognito user is registered with this phone number");
   if (name === "NotAuthorizedException") return unauthorized("The OTP session is invalid or expired");
+  if (name === "AccessDeniedException") return badRequest("The backend Lambda role cannot list Cognito users");
+  if (name === "ResourceNotFoundException") return badRequest("The backend Cognito user pool configuration is invalid");
   if (name === "InvalidParameterException" || name === "InvalidLambdaResponseException") {
     return badRequest("Cognito custom authentication is not configured correctly");
   }

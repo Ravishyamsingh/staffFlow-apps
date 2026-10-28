@@ -56,6 +56,7 @@ jobs:
           COGNITO_USER_POOL_ID: ap-south-1_ci_pool
           COGNITO_CLIENT_ID: ci-admin-client
           COGNITO_MOBILE_CLIENT_ID: ci-mobile-client
+          COGNITO_OAUTH_CLIENT_ID: ci-mobile-client
           COGNITO_ISSUER_URL: https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_ci_pool
           WEBSOCKET_API_ID: ci-websocket
           WEBSOCKET_API_ENDPOINT: https://ci-websocket.execute-api.ap-south-1.amazonaws.com/ci

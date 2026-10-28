@@ -49,7 +49,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestInit = {}) 
 
 async function refreshSessionFromCognito(session: CognitoSession) {
   const region = process.env.EXPO_PUBLIC_AWS_REGION ?? "ap-south-1";
-  const clientId = process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID;
+  const clientId = session.clientId ?? process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID;
   if (!clientId || !session.refreshToken) return null;
   const response = await fetch(`https://cognito-idp.${region}.amazonaws.com/`, { method: "POST", headers: { "Content-Type": "application/x-amz-json-1.1", "X-Amz-Target": "AWSCognitoIdentityProviderService.InitiateAuth" }, body: JSON.stringify({ AuthFlow: "REFRESH_TOKEN_AUTH", ClientId: clientId, AuthParameters: { REFRESH_TOKEN: session.refreshToken } }) });
   const payload = await response.json().catch(() => ({}));

@@ -13,6 +13,7 @@ const EnvironmentSchema = z.object({
   COGNITO_USER_POOL_ID: optionalString(),
   COGNITO_CLIENT_ID: optionalString(),
   COGNITO_MOBILE_CLIENT_ID: optionalString(),
+  COGNITO_OAUTH_CLIENT_ID: optionalString(),
   COGNITO_ISSUER_URL: optionalUrl,
   GEMINI_API_KEY: optionalString(),
   GEMINI_MODEL: z.preprocess(emptyAsUndefined, z.string().min(1).default("gemini-2.0-flash")),
@@ -28,6 +29,7 @@ export type BackendConfig = {
   cognitoUserPoolId?: string;
   cognitoClientId?: string;
   cognitoMobileClientId?: string;
+  cognitoOAuthClientId?: string;
   cognitoIssuerUrl?: string;
   geminiApiKey?: string;
   geminiModel: string;
@@ -45,6 +47,7 @@ export function getConfig(environment: NodeJS.ProcessEnv = process.env): Backend
     cognitoUserPoolId: parsed.COGNITO_USER_POOL_ID,
     cognitoClientId: parsed.COGNITO_CLIENT_ID,
     cognitoMobileClientId: parsed.COGNITO_MOBILE_CLIENT_ID,
+    cognitoOAuthClientId: parsed.COGNITO_OAUTH_CLIENT_ID,
     cognitoIssuerUrl: parsed.COGNITO_ISSUER_URL,
     geminiApiKey: parsed.GEMINI_API_KEY,
     geminiModel: parsed.GEMINI_MODEL,

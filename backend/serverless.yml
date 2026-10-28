@@ -34,6 +34,7 @@ provider:
         audience:
           - ${env:COGNITO_CLIENT_ID}
           - ${env:COGNITO_MOBILE_CLIENT_ID}
+          - ${env:COGNITO_OAUTH_CLIENT_ID}
   apiGateway:
     websocketApiId: ${env:WEBSOCKET_API_ID}
   websocketsApiName: ${self:service}-${self:provider.stage}
@@ -46,6 +47,7 @@ provider:
     COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID}
     COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID}
     COGNITO_MOBILE_CLIENT_ID: ${env:COGNITO_MOBILE_CLIENT_ID}
+    COGNITO_OAUTH_CLIENT_ID: ${env:COGNITO_OAUTH_CLIENT_ID}
     COGNITO_ISSUER_URL: ${env:COGNITO_ISSUER_URL}
     GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
     GEMINI_MODEL: ${env:GEMINI_MODEL, 'gemini-2.0-flash'}
@@ -98,8 +100,11 @@ functions:
     memorySize: 256
     events:
       - httpApi:
-          path: /api/auth/{proxy+}
-          method: ANY
+          path: /api/auth/otp/send
+          method: POST
+      - httpApi:
+          path: /api/auth/otp/verify
+          method: POST
   http:
     handler: src/handlers/http.handler
     timeout: 29

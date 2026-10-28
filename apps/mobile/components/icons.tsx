@@ -18,6 +18,7 @@ export const CirclePlus = icon("plus-circle-outline");
 export const Clock3 = icon("clock-outline");
 export const Filter = icon("filter-variant");
 export const Globe2 = icon("web");
+export const Google = icon("google");
 export const Handshake = icon("handshake-outline");
 export const ListChecks = icon("format-list-checks");
 export const LockKeyhole = icon("lock-outline");

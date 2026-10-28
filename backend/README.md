@@ -10,7 +10,7 @@ The HTTP Lambda is `src/handlers/http.handler`. API Gateway should expose:
 - `POST /api/auth/otp/send` and `POST /api/auth/otp/verify` for the optional mobile CUSTOM_AUTH OTP flow.
 - Authenticated `POST|GET|PUT|PATCH|DELETE /api/*` routes with a Cognito JWT authorizer.
 
-The JWT audience must include both the web and mobile Cognito app client IDs. The issuer must be:
+The JWT audience must include the web, mobile, and OAuth Cognito app client IDs. The OAuth client may be the mobile client when it is configured for the Cognito Hosted UI, or a separate no-secret app client. The issuer must be:
 
 ```text
 https://cognito-idp.ap-south-1.amazonaws.com/<user-pool-id>
@@ -107,6 +107,7 @@ $env:S3_BUCKET_NAME = "your-private-bucket"
 $env:COGNITO_USER_POOL_ID = "ap-south-1_xxxxxxxx"
 $env:COGNITO_CLIENT_ID = "your-admin-client-id"
 $env:COGNITO_MOBILE_CLIENT_ID = "your-mobile-client-id"
+$env:COGNITO_OAUTH_CLIENT_ID = "your-oauth-client-id" # defaults to the mobile client in CI/scripts
 $env:COGNITO_ISSUER_URL = "https://cognito-idp.ap-south-1.amazonaws.com/$env:COGNITO_USER_POOL_ID"
 $env:WEBSOCKET_API_ID = "your-existing-websocket-api-id"
 $env:WEBSOCKET_API_ENDPOINT = "https://<websocket-api-id>.execute-api.ap-south-1.amazonaws.com/prod"

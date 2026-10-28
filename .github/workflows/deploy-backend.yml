@@ -30,11 +30,13 @@ jobs:
       COGNITO_USER_POOL_ID: ${{ vars.COGNITO_USER_POOL_ID }}
       COGNITO_CLIENT_ID: ${{ vars.COGNITO_CLIENT_ID }}
       COGNITO_MOBILE_CLIENT_ID: ${{ vars.COGNITO_MOBILE_CLIENT_ID }}
+      COGNITO_OAUTH_CLIENT_ID: ${{ vars.COGNITO_OAUTH_CLIENT_ID || vars.COGNITO_MOBILE_CLIENT_ID }}
       WEBSOCKET_API_ID: ${{ vars.WEBSOCKET_API_ID }}
       WEBSOCKET_API_ENDPOINT: ${{ vars.WEBSOCKET_API_ENDPOINT }}
       ADMIN_ORIGIN: ${{ vars.ADMIN_ORIGIN }}
       EXPO_ORIGIN: ${{ vars.EXPO_ORIGIN || 'http://localhost:8081' }}
       CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+      API_BASE_URL: ${{ vars.EXPO_PUBLIC_API_BASE_URL || secrets.EXPO_PUBLIC_API_BASE_URL }}
       GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.0-flash' }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
@@ -59,3 +61,26 @@ jobs:
 
       - name: Deploy backend
         run: bash backend/scripts/deploy-aws.sh
+
+      - name: Verify public HTTP routes
+        env:
+          API_BASE_URL: ${{ env.API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${API_BASE_URL}" ]; then
+            echo "API_BASE_URL is not configured; skipping public route smoke test."
+            exit 0
+          fi
+          API_BASE_URL="${API_BASE_URL%/}"
+          curl --fail --silent --show-error "${API_BASE_URL}/health" >/dev/null
+          status=$(curl --silent --output /tmp/staffflow-auth-route.json --write-out "%{http_code}" --request GET "${API_BASE_URL}/api/auth/otp/send")
+          if [ "${status}" = "404" ]; then
+            cat /tmp/staffflow-auth-route.json
+            echo "The deployed API is missing /api/auth/otp/send."
+            exit 1
+          fi
+          if [ "${status}" != "400" ]; then
+            cat /tmp/staffflow-auth-route.json
+            echo "Unexpected status from the OTP route: ${status}"
+            exit 1
+          fi

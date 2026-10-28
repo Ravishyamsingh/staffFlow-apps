@@ -8,6 +8,7 @@ param(
   [Parameter(Mandatory = $true)] [string]$CognitoUserPoolId,
   [Parameter(Mandatory = $true)] [string]$CognitoClientId,
   [Parameter(Mandatory = $true)] [string]$CognitoMobileClientId,
+  [string]$CognitoOAuthClientId = "",
   [Parameter(Mandatory = $true)] [string]$WebsocketApiId,
   [Parameter(Mandatory = $true)] [string]$AdminOrigin,
   [string]$ExpoOrigin = "http://localhost:8081",
@@ -49,6 +50,7 @@ $env:S3_BUCKET_NAME = $S3BucketName
 $env:COGNITO_USER_POOL_ID = $CognitoUserPoolId
 $env:COGNITO_CLIENT_ID = $CognitoClientId
 $env:COGNITO_MOBILE_CLIENT_ID = $CognitoMobileClientId
+$env:COGNITO_OAUTH_CLIENT_ID = if ([string]::IsNullOrWhiteSpace($CognitoOAuthClientId)) { $CognitoMobileClientId } else { $CognitoOAuthClientId }
 $env:COGNITO_ISSUER_URL = "https://cognito-idp.$Region.amazonaws.com/$CognitoUserPoolId"
 $env:WEBSOCKET_API_ID = $WebsocketApiId
 $env:WEBSOCKET_API_ENDPOINT = $WebsocketApiEndpoint

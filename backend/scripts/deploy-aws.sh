@@ -61,5 +61,6 @@ npm run build
 npm exec -- serverless package --stage "$STAGE" --region "$MY_AWS_REGION"
 npm exec -- serverless deploy --stage "$STAGE" --region "$MY_AWS_REGION" --verbose
 npm exec -- serverless info --stage "$STAGE" --region "$MY_AWS_REGION"
+node scripts/configure-cognito-triggers.mjs
 
 echo "Backend deployment completed successfully."

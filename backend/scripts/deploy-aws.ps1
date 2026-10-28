@@ -105,6 +105,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "Serverless deployment failed." }
   npm exec -- serverless info --stage $Stage --region $Region
   if ($LASTEXITCODE -ne 0) { throw "Unable to read Serverless deployment info." }
+  node scripts/configure-cognito-triggers.mjs
+  if ($LASTEXITCODE -ne 0) { throw "Unable to attach Cognito custom-auth triggers." }
 } finally {
   Pop-Location
 }

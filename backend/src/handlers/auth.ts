@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import { CognitoIdentityProviderClient, InitiateAuthCommand, RespondToAuthChallengeCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { CognitoIdentityProviderClient, InitiateAuthCommand, ListUsersCommand, RespondToAuthChallengeCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import type { APIGatewayProxyHandlerV2, CreateAuthChallengeTriggerHandler, DefineAuthChallengeTriggerHandler, VerifyAuthChallengeResponseTriggerHandler } from "aws-lambda";
 import { z } from "zod";
@@ -28,16 +28,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     if (path === "/auth/otp/verify") return verifyOtp(VerifySchema.parse(body), event);
     throw badRequest("Auth route not found");
   } catch (error) {
-    return errorResponse(error, event);
+    return errorResponse(normalizeAuthError(error), event);
   }
 };
 
 async function startOtp(input: z.infer<typeof StartSchema>, event: Parameters<APIGatewayProxyHandlerV2>[0]) {
   if (!config.cognitoMobileClientId) throw badRequest("COGNITO_MOBILE_CLIENT_ID is not configured");
+  const username = await usernameForPhone(input.phoneNumber);
   const result = await cognito.send(new InitiateAuthCommand({
     AuthFlow: "CUSTOM_AUTH",
     ClientId: config.cognitoMobileClientId,
-    AuthParameters: { USERNAME: input.phoneNumber },
+    AuthParameters: { USERNAME: username },
   }));
   if (!result.Session) throw badRequest("Cognito did not return an authentication session");
   return json(200, { session: result.Session, challengeName: result.ChallengeName ?? "CUSTOM_CHALLENGE", delivery: "sms" }, event);
@@ -45,11 +46,12 @@ async function startOtp(input: z.infer<typeof StartSchema>, event: Parameters<AP
 
 async function verifyOtp(input: z.infer<typeof VerifySchema>, event: Parameters<APIGatewayProxyHandlerV2>[0]) {
   if (!config.cognitoMobileClientId) throw badRequest("COGNITO_MOBILE_CLIENT_ID is not configured");
+  const username = await usernameForPhone(input.phoneNumber);
   const result = await cognito.send(new RespondToAuthChallengeCommand({
     ClientId: config.cognitoMobileClientId,
     ChallengeName: "CUSTOM_CHALLENGE",
     Session: input.session,
-    ChallengeResponses: { USERNAME: input.phoneNumber, ANSWER: input.code },
+    ChallengeResponses: { USERNAME: username, ANSWER: input.code },
   }));
   if (!result.AuthenticationResult) throw unauthorized("The OTP is invalid or has expired");
   return json(200, {
@@ -58,6 +60,30 @@ async function verifyOtp(input: z.infer<typeof VerifySchema>, event: Parameters<
     refreshToken: result.AuthenticationResult.RefreshToken,
     expiresIn: result.AuthenticationResult.ExpiresIn,
   }, event);
+}
+
+async function usernameForPhone(phoneNumber: string) {
+  if (!config.cognitoUserPoolId) throw badRequest("COGNITO_USER_POOL_ID is not configured");
+  const result = await cognito.send(new ListUsersCommand({
+    UserPoolId: config.cognitoUserPoolId,
+    Filter: `phone_number = "${phoneNumber}"`,
+    Limit: 2,
+  }));
+  const users = result.Users ?? [];
+  if (users.length !== 1 || !users[0]?.Username) {
+    throw badRequest("No Cognito user is registered with this phone number");
+  }
+  return users[0].Username;
+}
+
+function normalizeAuthError(error: unknown) {
+  const name = error instanceof Error ? error.name : "";
+  if (name === "UserNotFoundException") return badRequest("No Cognito user is registered with this phone number");
+  if (name === "NotAuthorizedException") return unauthorized("The OTP session is invalid or expired");
+  if (name === "InvalidParameterException" || name === "InvalidLambdaResponseException") {
+    return badRequest("Cognito custom authentication is not configured correctly");
+  }
+  return error;
 }
 
 export const defineAuthChallenge: DefineAuthChallengeTriggerHandler = async (event) => {

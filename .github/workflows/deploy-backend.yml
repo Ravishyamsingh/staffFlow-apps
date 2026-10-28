@@ -87,6 +87,7 @@ jobs:
           if [ -n "${stack_api_base_url}" ] && [ "${stack_api_base_url}" != "None" ]; then
             API_BASE_URL="${stack_api_base_url}"
           fi
+          echo "Deployed HTTP API: ${API_BASE_URL}" >> "$GITHUB_STEP_SUMMARY"
           if [ -z "${API_BASE_URL}" ]; then
             echo "API_BASE_URL is not configured; skipping public route smoke test."
             exit 0

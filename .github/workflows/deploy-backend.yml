@@ -83,6 +83,10 @@ jobs:
           API_BASE_URL: ${{ env.API_BASE_URL }}
         run: |
           set -euo pipefail
+          stack_api_base_url="$(aws cloudformation describe-stacks --stack-name "staffflow-backend-${STAGE}" --region "${MY_AWS_REGION}" --query "Stacks[0].Outputs[?OutputKey=='HttpApiUrl'].OutputValue" --output text 2>/dev/null || true)"
+          if [ -n "${stack_api_base_url}" ] && [ "${stack_api_base_url}" != "None" ]; then
+            API_BASE_URL="${stack_api_base_url}"
+          fi
           if [ -z "${API_BASE_URL}" ]; then
             echo "API_BASE_URL is not configured; skipping public route smoke test."
             exit 0

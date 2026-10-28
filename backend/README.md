@@ -147,6 +147,22 @@ the AWS resource names and Cognito IDs as GitHub `production` environment
 variables. Store only `MY_AWS_DEPLOY_ROLE_ARN` and `GEMINI_API_KEY` as secrets.
 
 Configure GitHub's OIDC provider in IAM and restrict the assumed role trust
-policy to this repository and its `production` environment. The workflow uses
-short-lived AWS credentials through `aws-actions/configure-aws-credentials`; it
-does not require AWS access keys in GitHub.
+policy to this repository and its `production` environment. This repository was
+created after GitHub's immutable-subject rollout, so the production subject is:
+
+```text
+repo:Ravishyamsingh@156085103/staffFlow-apps@1435447905:environment:production
+```
+
+Use that exact value for
+`token.actions.githubusercontent.com:sub`. The name-only subject shown in older
+examples (`repo:OWNER/REPO:environment:production`) is retained in the policy
+template only for compatibility with older repositories; it does not match this
+repository's current token. The workflow uses short-lived AWS credentials
+through `aws-actions/configure-aws-credentials`; it does not require AWS access
+keys in GitHub.
+
+Use a dedicated GitHub deployment role for `MY_AWS_DEPLOY_ROLE_ARN`. Do not use a
+Lambda execution role such as `staffflow-api-health-role-*`; that role should be
+trusted by Lambda, while the deployment role should be trusted only by the
+GitHub OIDC provider and have the permissions required by Serverless/CloudFormation.

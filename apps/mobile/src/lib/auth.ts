@@ -28,17 +28,27 @@ function clientId() {
 }
 
 async function authApi<T>(path: string, body: Record<string, unknown>) {
+  const url = `${apiRoot()}${path}`;
   let response: Response;
   try {
-    response = await fetch(`${apiRoot()}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   } catch (error) {
-    Sentry.captureException(error);
+    Sentry.withScope((scope) => {
+      scope.setTag("auth.flow", "otp");
+      scope.setContext("auth.request", { method: "POST", path });
+      Sentry.captureException(error);
+    });
     throw error;
   }
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(String(payload.error ?? "Authentication request failed"));
-    Sentry.captureException(error);
+    const error = new Error(String(payload.error ?? payload.message ?? `Authentication request failed (${response.status})`));
+    Sentry.withScope((scope) => {
+      scope.setTag("auth.flow", "otp");
+      scope.setTag("auth.status", String(response.status));
+      scope.setContext("auth.request", { method: "POST", path, status: response.status, response: payload });
+      Sentry.captureException(error);
+    });
     throw error;
   }
   return payload as T;

@@ -35,8 +35,6 @@ provider:
           - ${env:COGNITO_CLIENT_ID}
           - ${env:COGNITO_MOBILE_CLIENT_ID}
           - ${env:COGNITO_OAUTH_CLIENT_ID}
-  apiGateway:
-    websocketApiId: ${env:WEBSOCKET_API_ID}
   websocketsApiName: ${self:service}-${self:provider.stage}
   websocketsApiRouteSelectionExpression: $request.body.action
   environment:
